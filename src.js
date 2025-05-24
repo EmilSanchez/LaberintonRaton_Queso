@@ -50,7 +50,8 @@ class MazeGame {
         this.stats = {
             validSteps: 0,
             invalidSteps: 0,
-            backtracks: 0
+            backtracks: 0,
+            
         };
     }
     
@@ -94,7 +95,7 @@ class MazeGame {
         this.resetGame();
         this.renderMaze();
         this.updateButtons();
-        this.showMessage('¡Laberinto generado! El ratón está fuera, listo para entrar y buscar el queso.', 'info');
+        this.showMessage('Laberinto generado', 'info');
     }
     
     ensureComplexPath() {
@@ -207,11 +208,14 @@ class MazeGame {
         this.solving = false;
         this.solved = false;
         this.startTime = null;
-        this.stats = { validSteps: 0, invalidSteps: 0, backtracks: 0 };
+        this.stats = { validSteps: 0, invalidSteps: 0, backtracks: 0, timeElapsed: 0 };
+    
+        const timeEl = document.getElementById('timeElapsed');
+        if (timeEl) timeEl.textContent = '0';
+
         this.updateStats();
         this.updateStackDisplays();
     }
-    
     renderMaze() {
         const mazeElement = document.getElementById('maze');
         mazeElement.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
@@ -277,18 +281,17 @@ class MazeGame {
         mouseElement.style.display = 'block';
     }
     
-    // Función para elegir la mejor dirección hacia el objetivo
-    getBestDirection() {
-        const target = { x: this.size - 2, y: this.end.y }; // Celda antes de la salida
+    // Función para conseguir TODAS las direcciones posibles
+    getAllDirections() {
         const directions = [
-            { x: -1, y: 0, name: 'arriba' },    // arriba
-            { x: 1, y: 0, name: 'abajo' },     // abajo
-            { x: 0, y: -1, name: 'izquierda' }, // izquierda
-            { x: 0, y: 1, name: 'derecha' }    // derecha
+            { x: -1, y: 0, name: 'arriba' },
+            { x: 1, y: 0, name: 'abajo' },
+            { x: 0, y: -1, name: 'izquierda' },
+            { x: 0, y: 1, name: 'derecha' }
         ];
         
-        // Calcular distancia Manhattan para cada dirección válida
-        const validMoves = [];
+        const target = { x: this.size - 2, y: this.end.y };
+        const allMoves = [];
         
         for (let dir of directions) {
             const next = {
@@ -296,27 +299,29 @@ class MazeGame {
                 y: this.current.y + dir.y
             };
             
-            if (this.isValidMove(next)) {
+            // Verificar si está dentro de los límites
+            if (next.x >= 1 && next.x < this.size - 1 && 
+                next.y >= 1 && next.y < this.size - 1) {
+                
                 const distance = Math.abs(next.x - target.x) + Math.abs(next.y - target.y);
-                validMoves.push({
+                const isValid = this.isValidMove(next);
+                const isWall = this.maze[next.x][next.y] === 1;
+                const isVisited = this.visited.has(`${next.x},${next.y}`);
+                
+                allMoves.push({
                     position: next,
                     distance: distance,
-                    direction: dir
+                    direction: dir,
+                    isValid: isValid,
+                    isWall: isWall,
+                    isVisited: isVisited
                 });
             }
         }
         
-        if (validMoves.length === 0) {
-            return null; // No hay movimientos válidos
-        }
-        
-        // Ordenar por distancia (menor distancia = mejor)
-        validMoves.sort((a, b) => a.distance - b.distance);
-        
-        // Devolver el mejor movimiento
-        return validMoves[0].position;
+        return allMoves;
     }
-    
+
     async solveMaze() {
         if (this.solving || !this.start || !this.end) return;
         
@@ -335,10 +340,10 @@ class MazeGame {
         this.updateButtons();
         this.showMessage('El ratón amarillo ha entrado al laberinto y esta en busca del queso', 'info');
         
-        const speed = parseInt(document.getElementById('speed').value);
+        
         
         while (!this.isEmpty(this.validSteps) && this.solving) {
-            await this.sleep(speed);
+            await this.sleep(200);
             
             // Verificar si llegó a la celda antes de la salida
             if (this.current.x === this.size - 2 && this.current.y === this.end.y) {
@@ -354,11 +359,37 @@ class MazeGame {
                 return;
             }
             
-            // Intentar moverse en la mejor dirección hacia el objetivo
-            const bestMove = this.getBestDirection();
+            // Obtener TODAS las direcciones posibles
+            const allDirections = this.getAllDirections();
             
-            if (bestMove) {
-                // Hay un movimiento válido hacia el objetivo
+            // Separar movimientos válidos e inválidos
+            const validMoves = allDirections.filter(move => move.isValid);
+            const invalidMoves = allDirections.filter(move => !move.isValid && !move.isVisited);
+            
+            // Agregar movimientos inválidos a la pila de pasos inválidos
+            for (let invalidMove of invalidMoves) {
+                if (invalidMove.isWall) {
+                    this.invalidSteps.push({
+                        x: invalidMove.position.x,
+                        y: invalidMove.position.y,
+                        reason: 'muro'
+                    });
+                    this.stats.invalidSteps++;
+                } else if (this.visited.has(`${invalidMove.position.x},${invalidMove.position.y}`)) {
+                    this.invalidSteps.push({
+                        x: invalidMove.position.x,
+                        y: invalidMove.position.y,
+                        reason: 'ya visitado'
+                    });
+                    this.stats.invalidSteps++;
+                }
+            }
+            
+            if (validMoves.length > 0) {
+                // Hay movimientos válidos, elegir el mejor
+                validMoves.sort((a, b) => a.distance - b.distance);
+                const bestMove = validMoves[0].position;
+                
                 this.current = bestMove;
                 this.validSteps.push(this.current);
                 this.visited.add(`${this.current.x},${this.current.y}`);
@@ -366,9 +397,16 @@ class MazeGame {
                 
                 // Animar movimiento del ratón
                 this.positionMouse(this.current.x, this.current.y);
+                
             } else {
                 // No hay movimientos válidos, necesita retroceder
+                const currentInvalid = { ...this.current, reason: 'callejon sin salida' };
+                this.invalidSteps.push(currentInvalid);
+                this.stats.invalidSteps++;
+                
+                // Quitar el paso actual de validSteps
                 this.validSteps.pop();
+                
                 if (!this.isEmpty(this.validSteps)) {
                     this.current = this.validSteps.peek();
                     this.stats.backtracks++;
@@ -387,13 +425,13 @@ class MazeGame {
         }
         
         if (this.isEmpty(this.validSteps)) {
-            this.showMessage('😞 No se encontró camino al queso. Intenta generar un nuevo laberinto.', 'error');
+            this.showMessage('No se encontró camino al queso. Intenta generar un nuevo laberinto.', 'error');
         }
         
         this.solving = false;
         this.updateButtons();
     }
-    
+
     isValidMove(pos) {
         // Permitir movimiento dentro del área interior del laberinto
         return pos.x >= 1 && pos.x < this.size - 1 && 
@@ -401,17 +439,19 @@ class MazeGame {
                 this.maze[pos.x][pos.y] === 0 && 
                 !this.visited.has(`${pos.x},${pos.y}`);
     }
-    
+
     updateVisualization() {
         // Limpiar visualización anterior
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
                 const cell = document.getElementById(`cell-${i}-${j}`);
-                cell.classList.remove('current', 'visited');
+                if (cell) {
+                    cell.classList.remove('current', 'visited', 'invalid');
+                }
             }
         }
         
-        // Mostrar camino visitado
+        // Mostrar camino visitado (pasos válidos)
         this.validSteps.toArray().forEach(pos => {
             if (pos.x !== this.start.x || pos.y !== this.start.y) {
                 const cell = document.getElementById(`cell-${pos.x}-${pos.y}`);
@@ -420,23 +460,17 @@ class MazeGame {
                 }
             }
         });
-    }
-    
-    showSolution() {
-        if (!this.solved) return;
         
-        // Mostrar la solución completa
-        this.validSteps.toArray().forEach(pos => {
+        // Mostrar pasos inválidos
+        this.invalidSteps.toArray().forEach(pos => {
             const cell = document.getElementById(`cell-${pos.x}-${pos.y}`);
             if (cell && !cell.classList.contains('start') && !cell.classList.contains('end')) {
-                cell.classList.remove('visited', 'current');
-                cell.classList.add('solution');
+                cell.classList.add('invalid');
             }
         });
-        
-        this.showMessage('Esta es la ruta que siguio el raton', 'success');
     }
-    
+
+
     updateStats() {
         document.getElementById('validSteps').textContent = this.stats.validSteps;
         document.getElementById('invalidSteps').textContent = this.stats.invalidSteps;
@@ -447,14 +481,16 @@ class MazeGame {
             document.getElementById('timeElapsed').textContent = elapsed;
         }
     }
-    
+
     updateStackDisplays() {
         this.updateStackDisplay('validStack', this.validSteps, false);
         this.updateStackDisplay('invalidStack', this.invalidSteps, true);
     }
-    
+
     updateStackDisplay(elementId, stack, isInvalid) {
         const element = document.getElementById(elementId);
+        if (!element) return;
+        
         const items = stack.toArray();
         
         if (items.length === 0) {
@@ -462,36 +498,42 @@ class MazeGame {
             return;
         }
         
-        element.innerHTML = items.reverse().map((pos, index) => 
-            `<div class="stack-item ${isInvalid ? 'invalid-step' : ''}">
-                ${isInvalid ? '❌' : '✅'} (${pos.x}, ${pos.y}) - Posición ${items.length - index}
-            </div>`
-        ).join('');
+        element.innerHTML = items.reverse().map((pos, index) => {
+            const reason = pos.reason ? `${pos.reason}` : '';
+            return `<div class="stack-item ${isInvalid ? 'invalid-step' : ''}">
+                ${isInvalid ? '' : ''} (${pos.y}, ${pos.x}) ${reason}
+            </div>`;
+        }).join('');
     }
-    
+
     updateButtons() {
         document.getElementById('solveBtn').disabled = !this.start || this.solving || this.solved;
-        document.getElementById('showSolutionBtn').disabled = !this.solved;
+        
         document.getElementById('resetBtn').disabled = !this.start;
     }
-    
+
     showMessage(text, type) {
         const messageEl = document.getElementById('message');
         messageEl.textContent = text;
         messageEl.className = `message ${type}`;
     }
-    
+
     isEmpty(stack) {
         return stack.isEmpty();
     }
-    
+
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Método para verificar si una celda es un muro
+    isWall(x, y) {
+        return this.maze[x][y] === 1;
     }
 }
 
 // Inicializar el juego
-const game = new MazeGame();
+var game = new MazeGame();
 
 // Funciones para los botones
 function generateMaze() {

@@ -2,7 +2,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0f2c66 0%, #0d2260 100%);
     color: white;
     min-height: 100vh;
 }
@@ -230,6 +230,6 @@ button:disabled {
 
 .info {
     background: rgba(33, 150, 243, 0.2);
-    border: 2px solid #2196F3;
-    color: #2196F3;
+    border: 2px solid #25f321;
+    color: #2cf321;
 }

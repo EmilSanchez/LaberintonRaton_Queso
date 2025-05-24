@@ -27,19 +27,9 @@
             <div class="control-group">
                 <label for="wallDensity">Densidad de Muros:</label>
                 <select id="wallDensity">
-                    <option value="0.2">Fácil (20%)</option>
-                    <option value="0.3" selected>Medio (30%)</option>
-                    <option value="0.4">Difícil (40%)</option>
-                </select>
-            </div>
-            
-            <div class="control-group">
-                <label for="speed">Velocidad:</label>
-                <select id="speed">
-                    <option value="1000">Lenta</option>
-                    <option value="500" selected>Media</option>
-                    <option value="200">Rápida</option>
-                    <option value="50">Muy Rápida</option>
+                    <option value="0.45">Fácil (20%)</option>
+                    <option value="0.55" selected>Medio (30%)</option>
+                    <option value="0.75">Difícil (40%)</option>
                 </select>
             </div>
         </div>
@@ -47,8 +37,8 @@
         <div class="controls">
             <button onclick="generateMaze()">Generar Laberinto</button>
             <button onclick="solveMaze()" id="solveBtn" disabled>Resolver Laberinto</button>
-            <button onclick="showSolution()" id="showSolutionBtn" disabled>Mostrar Solucion</button>
-            <button onclick="resetMaze()" id="resetBtn" disabled>🔄 Reiniciar</button>
+            
+            <button onclick="resetMaze()" id="resetBtn" disabled> Reiniciar</button>
         </div>
         
         <div id="message"></div>
@@ -60,7 +50,7 @@
             
             <div class="info-panels">
                 <div class="panel">
-                    <h3>Estadísticas</h3>
+                    
                     <div class="stats">
                         <div class="stat">
                             <div>Pasos Válidos</div>
