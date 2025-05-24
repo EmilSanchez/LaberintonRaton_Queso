@@ -372,7 +372,7 @@ class MazeGame {
                 if (!this.isEmpty(this.validSteps)) {
                     this.current = this.validSteps.peek();
                     this.stats.backtracks++;
-                    
+                   
                     // Animar retroceso del ratón
                     this.positionMouse(this.current.x, this.current.y);
                 } else {
