@@ -59,10 +59,9 @@ class MazeGame {
         this.size = parseInt(document.getElementById('sizeSelect').value);
         const density = parseFloat(document.getElementById('wallDensity').value);
         
-        // Inicializar laberinto - primero todo cerrado
         this.maze = Array(this.size).fill().map(() => Array(this.size).fill(1));
         
-        // Generar interior del laberinto con más complejidad
+        
         for (let i = 1; i < this.size - 1; i++) {
             for (let j = 1; j < this.size - 1; j++) {
                 if (Math.random() < density) {
@@ -73,25 +72,21 @@ class MazeGame {
             }
         }
         
-        // Crear entrada y salida en bordes opuestos
-        // Entrada en lado izquierdo
+
         const entranceY = Math.floor(Math.random() * (this.size - 2)) + 1;
         this.start = { x: 0, y: entranceY };
-        this.maze[0][entranceY] = 0; // Abrir entrada
+        this.maze[0][entranceY] = 0; 
         
-        // Salida en lado derecho  
         const exitY = Math.floor(Math.random() * (this.size - 2)) + 1;
         this.end = { x: this.size - 1, y: exitY };
-        this.maze[this.size - 1][exitY] = 0; // Abrir salida
-        
-        // Asegurar celdas adyacentes a entrada y salida sean caminos
+        this.maze[this.size - 1][exitY] = 0;
+
         this.maze[1][entranceY] = 0;
         this.maze[this.size - 2][exitY] = 0;
         
-        // Generar camino más complejo y tortuoso
+
         this.ensureComplexPath();
         
-        // Reset del juego
         this.resetGame();
         this.renderMaze();
         this.updateButtons();
@@ -99,30 +94,27 @@ class MazeGame {
     }
     
     ensureComplexPath() {
-        // Crear múltiples caminos tortuosos en lugar de uno directo
+        
         let pathPoints = [];
         
-        // Punto inicial (entrada)
+        
         pathPoints.push({ x: 1, y: this.start.y });
         
-        // Agregar puntos intermedios aleatorios para crear un camino tortuoso
-        const numWaypoints = Math.floor(this.size / 4) + 2; // Más puntos = más tortuoso
+        
+        const numWaypoints = Math.floor(this.size / 4) + 2; 
         
         for (let i = 1; i < numWaypoints; i++) {
             const x = Math.floor((this.size - 2) * (i / numWaypoints)) + 1;
             const y = Math.floor(Math.random() * (this.size - 4)) + 2;
             pathPoints.push({ x, y });
         }
-        
-        // Punto final (salida)
+
         pathPoints.push({ x: this.size - 2, y: this.end.y });
         
-        // Conectar todos los puntos con caminos curvos
         for (let i = 0; i < pathPoints.length - 1; i++) {
             this.createWindingPath(pathPoints[i], pathPoints[i + 1]);
         }
         
-        // Agregar caminos secundarios y callejones sin salida para mayor complejidad
         this.addSecondaryPaths();
     }
     
@@ -132,7 +124,7 @@ class MazeGame {
         while (current.x !== end.x || current.y !== end.y) {
             this.maze[current.x][current.y] = 0;
             
-            // Movimiento más aleatorio en lugar de directo
+            
             const directions = [];
             
             if (current.x < end.x) directions.push({ x: 1, y: 0 });
@@ -140,8 +132,8 @@ class MazeGame {
             if (current.y < end.y) directions.push({ x: 0, y: 1 });
             if (current.y > end.y) directions.push({ x: 0, y: -1 });
             
-            // Añadir movimientos perpendiculares para crear curvas
-            if (Math.random() < 0.3) { // 30% de probabilidad de hacer un movimiento curvo
+            // 
+            if (Math.random() < 0.3) { 
                 if (current.x !== end.x) {
                     directions.push({ x: 0, y: Math.random() < 0.5 ? 1 : -1 });
                 }
@@ -158,7 +150,7 @@ class MazeGame {
                 next.y >= 1 && next.y < this.size - 1) {
                 current = next;
             } else {
-                // Si se sale de límites, moverse directamente hacia el objetivo
+               
                 if (current.x < end.x) current.x++;
                 else if (current.x > end.x) current.x--;
                 else if (current.y < end.y) current.y++;
@@ -169,13 +161,13 @@ class MazeGame {
     }
     
     addSecondaryPaths() {
-        // Agregar algunos caminos secundarios y callejones sin salida
+        
         for (let attempts = 0; attempts < this.size * 2; attempts++) {
             const startX = Math.floor(Math.random() * (this.size - 4)) + 2;
             const startY = Math.floor(Math.random() * (this.size - 4)) + 2;
             
-            if (this.maze[startX][startY] === 0) { // Comenzar desde un camino existente
-                const length = Math.floor(Math.random() * 4) + 2; // Caminos de 2-5 celdas
+            if (this.maze[startX][startY] === 0) { // 
+                const length = Math.floor(Math.random() * 4) + 2;
                 let currentX = startX;
                 let currentY = startY;
                 
@@ -229,10 +221,10 @@ class MazeGame {
                 
                 if (this.start && i === this.start.x && j === this.start.y) {
                     cell.className += ' start';
-                    cell.textContent = '🏠'; // Entrada
+                    cell.textContent = '🏠';
                 } else if (this.end && i === this.end.x && j === this.end.y) {
                     cell.className += ' end';
-                    cell.textContent = '🧀'; // Salida
+                    cell.textContent = '🧀'; 
                 } else if (this.maze[i][j] === 1) {
                     cell.className += ' wall';
                     cell.textContent = '🧱';
@@ -244,12 +236,12 @@ class MazeGame {
             }
         }
         
-        // Crear elemento del ratón animado
+       
         this.createAnimatedMouse();
     }
     
     createAnimatedMouse() {
-        // Remover ratón anterior si existe
+       
         const existingMouse = document.getElementById('animated-mouse');
         if (existingMouse) {
             existingMouse.remove();
@@ -262,7 +254,7 @@ class MazeGame {
         mouseElement.style.fontSize = '20px';
         mouseElement.style.zIndex = '10';
         mouseElement.style.transition = 'all 0.3s ease';
-        mouseElement.style.display = 'none'; // Oculto inicialmente
+        mouseElement.style.display = 'none'; 
         
         document.body.appendChild(mouseElement);
     }
@@ -281,7 +273,6 @@ class MazeGame {
         mouseElement.style.display = 'block';
     }
     
-    // Función para conseguir TODAS las direcciones posibles
     getAllDirections() {
         const directions = [
             { x: -1, y: 0, name: 'arriba' },
@@ -328,13 +319,13 @@ class MazeGame {
         this.solving = true;
         this.startTime = Date.now();
         
-        // Empezar desde la celda adyacente a la entrada (dentro del laberinto)
+       
         this.current = { x: 1, y: this.start.y };
         this.validSteps.push(this.current);
         this.visited.add(`${this.current.x},${this.current.y}`);
         this.stats.validSteps++;
         
-        // Mostrar ratón en posición inicial
+        
         this.positionMouse(this.current.x, this.current.y);
         
         this.updateButtons();
@@ -343,30 +334,8 @@ class MazeGame {
         
         
         while (!this.isEmpty(this.validSteps) && this.solving) {
-            await this.sleep(200);
-            
-            // Verificar si llegó a la celda antes de la salida
-            if (this.current.x === this.size - 2 && this.current.y === this.end.y) {
-                this.solved = true;
-                this.solving = false;
-                
-                // Animar llegada al queso
-                await this.sleep(300);
-                this.positionMouse(this.end.x, this.end.y);
-                
-                this.showMessage('El raton encontro el queso', 'success');
-                this.updateButtons();
-                return;
-            }
-            
-            // Obtener TODAS las direcciones posibles
-            const allDirections = this.getAllDirections();
-            
-            // Separar movimientos válidos e inválidos
-            const validMoves = allDirections.filter(move => move.isValid);
-            const invalidMoves = allDirections.filter(move => !move.isValid && !move.isVisited);
-            
-            // Agregar movimientos inválidos a la pila de pasos inválidos
+            await this.sleep(400);
+
             for (let invalidMove of invalidMoves) {
                 if (invalidMove.isWall) {
                     this.invalidSteps.push({
@@ -386,7 +355,7 @@ class MazeGame {
             }
             
             if (validMoves.length > 0) {
-                // Hay movimientos válidos, elegir el mejor
+                
                 validMoves.sort((a, b) => a.distance - b.distance);
                 const bestMove = validMoves[0].position;
                 
@@ -395,26 +364,22 @@ class MazeGame {
                 this.visited.add(`${this.current.x},${this.current.y}`);
                 this.stats.validSteps++;
                 
-                // Animar movimiento del ratón
+               
                 this.positionMouse(this.current.x, this.current.y);
                 
             } else {
-                // No hay movimientos válidos, necesita retroceder
                 const currentInvalid = { ...this.current, reason: 'callejon sin salida' };
                 this.invalidSteps.push(currentInvalid);
                 this.stats.invalidSteps++;
                 
-                // Quitar el paso actual de validSteps
                 this.validSteps.pop();
                 
                 if (!this.isEmpty(this.validSteps)) {
                     this.current = this.validSteps.peek();
                     this.stats.backtracks++;
                    
-                    // Animar retroceso del ratón
                     this.positionMouse(this.current.x, this.current.y);
                 } else {
-                    // No hay más caminos
                     break;
                 }
             }
@@ -451,7 +416,6 @@ class MazeGame {
             }
         }
         
-        // Mostrar camino visitado (pasos válidos)
         this.validSteps.toArray().forEach(pos => {
             if (pos.x !== this.start.x || pos.y !== this.start.y) {
                 const cell = document.getElementById(`cell-${pos.x}-${pos.y}`);
@@ -532,10 +496,8 @@ class MazeGame {
     }
 }
 
-// Inicializar el juego
 var game = new MazeGame();
 
-// Funciones para los botones
 function generateMaze() {
     game.generateMaze();
 }
@@ -555,7 +517,6 @@ function resetMaze() {
     game.showMessage('¡Juego reiniciado!', 'info');
 }
 
-// Generar laberinto inicial
 window.onload = function() {
     game.generateMaze();
 };
